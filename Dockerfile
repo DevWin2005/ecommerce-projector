@@ -27,9 +27,17 @@ COPY docker/nginx.conf /etc/nginx/templates/default.conf.template
 COPY docker/php.ini /usr/local/etc/php/conf.d/zz-app.ini
 COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-app.conf
 COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/app-entrypoint
+
+# Đảm bảo tệp check-ca.php có mặt ở cả /var/www/docker và /var/www/html/docker với quyền đọc cho www-data
+RUN mkdir -p /var/www/docker /var/www/html/docker
+COPY docker/check-ca.php /var/www/docker/check-ca.php
+COPY docker/check-ca.php /var/www/html/docker/check-ca.php
+
 RUN mkdir -p /run/nginx \
-    && ln -s /var/www /var/www/html \
+    && chmod -R 755 /var/www/docker /var/www/html/docker \
+    && chown -R www-data:www-data /var/www/docker /var/www/html/docker \
     && chmod -R ug+rwX /var/www/storage /var/www/bootstrap/cache
+
 EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD curl --fail --silent "http://127.0.0.1:${PORT}/up" > /dev/null || exit 1
