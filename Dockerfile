@@ -5,7 +5,7 @@ RUN apk add --no-cache bash nginx curl gettext su-exec tini ca-certificates \
     libpng-dev libzip-dev oniguruma-dev \
     && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring zip gd bcmath opcache \
     && apk del .build-deps
-WORKDIR /var/www
+WORKDIR /var/www/html
 
 FROM php-base AS build
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
@@ -22,21 +22,16 @@ FROM php-base AS production
 ENV APP_ENV=production APP_DEBUG=false LOG_CHANNEL=stderr LOG_LEVEL=info \
     DB_CONNECTION=mysql SESSION_DRIVER=database SESSION_SECURE_COOKIE=true \
     CACHE_STORE=database QUEUE_CONNECTION=sync PORT=10000 RUN_MIGRATIONS=true
-COPY --from=build --chown=www-data:www-data /var/www /var/www
+WORKDIR /var/www/html
+COPY --from=build --chown=www-data:www-data /var/www/html /var/www/html
 COPY docker/nginx.conf /etc/nginx/templates/default.conf.template
 COPY docker/php.ini /usr/local/etc/php/conf.d/zz-app.ini
 COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-app.conf
 COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/app-entrypoint
 
-# Đảm bảo tệp check-ca.php có mặt ở cả /var/www/docker và /var/www/html/docker với quyền đọc cho www-data
-RUN mkdir -p /var/www/docker /var/www/html/docker
-COPY docker/check-ca.php /var/www/docker/check-ca.php
-COPY docker/check-ca.php /var/www/html/docker/check-ca.php
-
 RUN mkdir -p /run/nginx \
-    && chmod -R 755 /var/www/docker /var/www/html/docker \
-    && chown -R www-data:www-data /var/www/docker /var/www/html/docker \
-    && chmod -R ug+rwX /var/www/storage /var/www/bootstrap/cache
+    && chown -R www-data:www-data /var/www/html \
+    && chmod -R ug+rwX /var/www/html/storage /var/www/html/bootstrap/cache
 
 EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
