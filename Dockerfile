@@ -28,6 +28,7 @@ COPY docker/php.ini /usr/local/etc/php/conf.d/zz-app.ini
 COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-app.conf
 COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/app-entrypoint
 RUN mkdir -p /run/nginx \
+    && ln -s /var/www /var/www/html \
     && chmod -R ug+rwX /var/www/storage /var/www/bootstrap/cache
 EXPOSE 10000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
