@@ -4,9 +4,13 @@ cd /var/www/html
 
 # Render secret mounts may be readable by root but not by www-data.
 # Copy only the CA certificate at runtime to an app-readable private location.
+if [[ -z "${MYSQL_ATTR_SSL_CA:-}" && -f "/etc/secrets/ca.pem" ]]; then
+    export MYSQL_ATTR_SSL_CA="/etc/secrets/ca.pem"
+fi
+
 if [[ -n "${MYSQL_ATTR_SSL_CA:-}" ]]; then
     if [[ ! -f "$MYSQL_ATTR_SSL_CA" || ! -r "$MYSQL_ATTR_SSL_CA" ]]; then
-        echo "Cannot read MySQL CA file. Check Render Secret Files and MYSQL_ATTR_SSL_CA." >&2
+        echo "Cannot read MySQL CA file at ${MYSQL_ATTR_SSL_CA}. Check Render Secret Files and MYSQL_ATTR_SSL_CA." >&2
         exit 1
     fi
     (
@@ -50,7 +54,8 @@ case "${RUN_MIGRATIONS:-true}" in
     *) echo "RUN_MIGRATIONS must be true or false" >&2; exit 1 ;;
 esac
 
-case "${RUN_SEEDERS:-false}" in
+RUN_SEEDERS="${RUN_SEEDERS:-${RUN_SEEDER:-false}}"
+case "${RUN_SEEDERS}" in
     true) su-exec www-data php artisan db:seed --force --no-interaction ;;
     false) ;;
     *) echo "RUN_SEEDERS must be true or false" >&2; exit 1 ;;

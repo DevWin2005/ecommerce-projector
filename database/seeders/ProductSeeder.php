@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Str;
 
 class ProductSeeder extends Seeder
 {
@@ -36,7 +37,11 @@ class ProductSeeder extends Seeder
             $category = Category::firstOrCreate(['name' => $categoryName]);
             Product::firstOrCreate(
                 ['name' => $name, 'category_id' => $category->id],
-                ['price' => $price, 'quantity' => $quantity]
+                [
+                    'slug' => Str::slug($name),
+                    'price' => $price,
+                    'stock' => $quantity,
+                ]
             );
         }
     }
