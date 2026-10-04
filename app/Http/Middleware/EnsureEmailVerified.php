@@ -15,9 +15,10 @@ class EnsureEmailVerified
             return redirect()->route('login');
         }
 
-        if (Auth::user()->verify === null) {
-            $request->session()->put('pending_verification_user_id', Auth::id());
-            $request->session()->put('pending_verification_email', Auth::user()->email);
+        $user = Auth::user();
+        if ($user->verify === null && $user->email_verified_at === null && ! $user->hasVerifiedEmail()) {
+            $request->session()->put('pending_verification_user_id', $user->id);
+            $request->session()->put('pending_verification_email', $user->email);
 
             return redirect()
                 ->route('verification.notice')
