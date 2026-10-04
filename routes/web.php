@@ -122,10 +122,11 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 Route::get('/email/verify', [AuthController::class, 'showVerifyEmailNotice'])->name('verification.notice');
-Route::post('/email/verify/resend', [AuthController::class, 'resendVerificationEmail'])->name('verification.resend');
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
     ->middleware('signed')
     ->name('verification.verify');
+Route::post('/email/verification-notification', [AuthController::class, 'resendVerificationEmail'])->name('verification.send');
+Route::post('/email/verify/resend', [AuthController::class, 'resendVerificationEmail'])->name('verification.resend');
 
 
 /*

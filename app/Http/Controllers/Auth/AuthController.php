@@ -43,7 +43,6 @@ class AuthController extends Controller
         ]);
 
         event(new Registered($user));
-        $this->sendVerificationEmail($user);
 
         $request->session()->put('pending_verification_user_id', $user->id);
         $request->session()->put('pending_verification_email', $user->email);
@@ -119,6 +118,10 @@ class AuthController extends Controller
     {
         $pendingUserId = $request->session()->get('pending_verification_user_id');
 
+        if (!$pendingUserId && Auth::check()) {
+            $pendingUserId = Auth::id();
+        }
+
         if (!$pendingUserId) {
             return redirect()->route('login')->with('error', 'Phiên xác thực đã hết hạn. Vui lòng đăng nhập lại.');
         }
@@ -129,13 +132,13 @@ class AuthController extends Controller
             return redirect()->route('register')->with('error', 'Không tìm thấy tài khoản cần xác thực.');
         }
 
-        if ($user->verify !== null || $user->email_verified_at !== null) {
+        if ($user->hasVerifiedEmail() || $user->verify !== null) {
             $request->session()->forget(['pending_verification_user_id', 'pending_verification_email']);
 
             return redirect()->route('login')->with('success', 'Tài khoản đã được xác thực. Bạn có thể đăng nhập.');
         }
 
-        $this->sendVerificationEmail($user);
+        $user->sendEmailVerificationNotification();
 
         return back()->with('success', 'Đã gửi lại email xác thực. Vui lòng kiểm tra hộp thư.');
     }
@@ -157,25 +160,5 @@ class AuthController extends Controller
         $request->session()->forget(['pending_verification_user_id', 'pending_verification_email']);
 
         return redirect()->route('login')->with('success', 'Xác thực email thành công! Bạn có thể đăng nhập.');
-    }
-
-    private function sendVerificationEmail(User $user): void
-    {
-        $verificationUrl = URL::temporarySignedRoute(
-            'verification.verify',
-            now()->addMinutes(60),
-            [
-                'id' => $user->id,
-                'hash' => sha1($user->email),
-            ]
-        );
-
-        Mail::send('auth.emails.verify-email', [
-            'user' => $user,
-            'verificationUrl' => $verificationUrl,
-        ], function ($message) use ($user): void {
-            $message->to($user->email, $user->name)
-                ->subject('Xác thực email tài khoản');
-        });
     }
 }

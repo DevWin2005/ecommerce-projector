@@ -7,6 +7,8 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -49,6 +51,29 @@ class User extends Authenticatable implements MustVerifyEmail
             'verify' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * Send the email verification notification.
+     */
+    public function sendEmailVerificationNotification(): void
+    {
+        $verificationUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            [
+                'id' => $this->id,
+                'hash' => sha1($this->getEmailForVerification()),
+            ]
+        );
+
+        Mail::send('auth.emails.verify-email', [
+            'user' => $this,
+            'verificationUrl' => $verificationUrl,
+        ], function ($message): void {
+            $message->to($this->email, $this->name)
+                ->subject('Xác thực email tài khoản');
+        });
     }
 
     public function orders()
