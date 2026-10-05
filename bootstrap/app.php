@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -27,5 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Xử lý khi CSRF token hết hạn (session timeout)
+        // Redirect về trang trước đó với thông báo lỗi thân thiện thay vì hiển thị 404/419
+        $exceptions->renderable(function (TokenMismatchException $e, Request $request) {
+            return redirect()->back()->with('error', 'Phiên làm việc đã hết hạn. Vui lòng thử lại.');
+        });
     })->create();

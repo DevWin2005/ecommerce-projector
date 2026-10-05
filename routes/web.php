@@ -177,6 +177,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/coupons/bulk-action', [AdminCouponController::class, 'bulkAction'])->name('coupons.bulkAction');
     Route::put('/coupons/{id}', [AdminCouponController::class, 'update'])->name('coupons.update');
     Route::delete('/coupons/{id}', [AdminCouponController::class, 'destroy'])->name('coupons.destroy');
+
+    // Fallback GET routes cho bulk-action (phòng trường hợp truy cập trực tiếp URL hoặc bị redirect GET)
+    Route::get('/categories/bulk-action', fn () => redirect()->route('admin.categories.index'));
+    Route::get('/products/bulk-action', fn () => redirect()->route('admin.products.index'));
+    Route::get('/orders/bulk-action', fn () => redirect()->route('admin.orders.index'));
+    Route::get('/users/bulk-action', fn () => redirect()->route('admin.users.index'));
+    Route::get('/coupons/bulk-action', fn () => redirect()->route('admin.coupons.index'));
 });
 
 
