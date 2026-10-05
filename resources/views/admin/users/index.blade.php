@@ -145,13 +145,9 @@
                                         <i class="fa-solid fa-pen"></i>
                                     </a>
                                     @if($u->id !== Auth::id())
-                                        <form action="{{ route('admin.users.destroy', $u->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn XÓA tài khoản {{ $u->name }} không?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" title="Xóa người dùng">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </button>
-                                        </form>
+                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1" title="Xóa người dùng" onclick="deleteSingleUser('{{ route('admin.users.destroy', $u->id) }}', '{{ addslashes($u->name) }}')">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
                                     @endif
                                 </div>
                             </td>
@@ -169,7 +165,21 @@
     </div>
 </form>
 
+<!-- Single Delete Form (nằm ngoài form bulk-action để tránh bị lồng form HTML) -->
+<form id="singleDeleteForm" action="" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
+</form>
+
 <script>
+function deleteSingleUser(url, userName) {
+    if (confirm(`Bạn có chắc chắn muốn XÓA tài khoản "${userName}" không?`)) {
+        const form = document.getElementById('singleDeleteForm');
+        form.action = url;
+        form.submit();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const selectAll = document.getElementById('selectAll');
     const itemCheckboxes = document.querySelectorAll('.item-checkbox');

@@ -70,11 +70,7 @@
                                 <td>{{ $product->brightness ? $product->brightness . ' Lumens' : 'N/A' }}</td>
                                 <td class="text-end pe-3">
                                     <a href="{{ route('admin.products.edit', $product->id) }}" class="btn btn-outline-warning btn-sm rounded-pill px-2">Sửa</a>
-                                    <form action="{{ route('admin.products.destroy', $product->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa máy chiếu này?')">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2">Xóa</button>
-                                    </form>
+                                    <button type="button" class="btn btn-outline-danger btn-sm rounded-pill px-2" onclick="deleteSingleProduct('{{ route('admin.products.destroy', $product->id) }}', '{{ addslashes($product->name) }}')">Xóa</button>
                                 </td>
                             </tr>
                         @empty
@@ -87,7 +83,21 @@
     </form>
 </div>
 
+<!-- Form xóa đơn lẻ sản phẩm -->
+<form id="singleDeleteProductForm" action="" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
+</form>
+
 <script>
+function deleteSingleProduct(url, productName) {
+    if (confirm(`Bạn có chắc chắn muốn XÓA máy chiếu "${productName}" không?`)) {
+        const form = document.getElementById('singleDeleteProductForm');
+        form.action = url;
+        form.submit();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const selectAll = document.getElementById('selectAll');
     const itemCheckboxes = document.querySelectorAll('.item-checkbox');

@@ -58,22 +58,26 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function sendEmailVerificationNotification(): void
     {
-        $verificationUrl = URL::temporarySignedRoute(
-            'verification.verify',
-            now()->addMinutes(60),
-            [
-                'id' => $this->id,
-                'hash' => sha1($this->getEmailForVerification()),
-            ]
-        );
+        try {
+            $verificationUrl = URL::temporarySignedRoute(
+                'verification.verify',
+                now()->addMinutes(60),
+                [
+                    'id' => $this->id,
+                    'hash' => sha1($this->getEmailForVerification()),
+                ]
+            );
 
-        Mail::send('auth.emails.verify-email', [
-            'user' => $this,
-            'verificationUrl' => $verificationUrl,
-        ], function ($message): void {
-            $message->to($this->email, $this->name)
-                ->subject('Xác thực email tài khoản');
-        });
+            Mail::send('auth.emails.verify-email', [
+                'user' => $this,
+                'verificationUrl' => $verificationUrl,
+            ], function ($message): void {
+                $message->to($this->email, $this->name)
+                    ->subject('Xác thực email tài khoản');
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Lỗi gửi email xác thực Brevo/SMTP: ' . $e->getMessage());
+        }
     }
 
     public function orders()

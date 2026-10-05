@@ -68,13 +68,9 @@
                                         Sửa
                                     </a>
                                     
-                                    <form action="{{ route('admin.categories.destroy', $category->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3" onclick="return confirm('Bạn có chắc muốn xóa danh mục [{{ $category->name }}]? Các sản phẩm thuộc danh mục này có thể bị ảnh hưởng.')">
-                                            Xóa
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-danger btn-sm rounded-pill px-3" onclick="deleteSingleCategory('{{ route('admin.categories.destroy', $category->id) }}', '{{ addslashes($category->name) }}')">
+                                        Xóa
+                                    </button>
                                 </td>
                             </tr>
                         @empty
@@ -91,7 +87,21 @@
     </form>
 </div>
 
+<!-- Form xóa đơn lẻ danh mục -->
+<form id="singleDeleteCategoryForm" action="" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
+</form>
+
 <script>
+function deleteSingleCategory(url, categoryName) {
+    if (confirm(`Bạn có chắc muốn xóa danh mục [${categoryName}]? Các sản phẩm thuộc danh mục này có thể bị ảnh hưởng.`)) {
+        const form = document.getElementById('singleDeleteCategoryForm');
+        form.action = url;
+        form.submit();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const selectAll = document.getElementById('selectAll');
     const itemCheckboxes = document.querySelectorAll('.item-checkbox');

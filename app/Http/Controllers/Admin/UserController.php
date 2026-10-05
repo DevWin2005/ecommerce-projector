@@ -148,9 +148,12 @@ class UserController extends Controller
             return redirect()->back()->with('error', 'Bạn không thể xóa tài khoản Admin đang đăng nhập!');
         }
 
-        $user->delete();
-
-        return redirect()->route('admin.users.index')->with('success', 'Đã xóa tài khoản người dùng thành công!');
+        try {
+            $user->delete();
+            return redirect()->route('admin.users.index')->with('success', 'Đã xóa tài khoản người dùng thành công!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Không thể xóa tài khoản này do có dữ liệu liên quan (đơn hàng, đánh giá...).');
+        }
     }
 
     /**
@@ -169,9 +172,32 @@ class UserController extends Controller
         if ($request->action === 'delete') {
             // Không xóa tài khoản đang đăng nhập
             $ids = array_diff($request->ids, [Auth::id()]);
-            $count = User::whereIn('id', $ids)->delete();
+            
+            if (empty($ids)) {
+                return redirect()->back()->with('error', 'Không có tài khoản hợp lệ nào được chọn để xóa.');
+            }
 
-            return redirect()->back()->with('success', "Đã xóa hàng loạt {$count} tài khoản người dùng thành công!");
+            $count = 0;
+            $failed = 0;
+            
+            foreach (User::whereIn('id', $ids)->get() as $userToDelete) {
+                try {
+                    $userToDelete->delete();
+                    $count++;
+                } catch (\Exception $e) {
+                    $failed++;
+                }
+            }
+
+            if ($count > 0) {
+                $msg = "Đã xóa hàng loạt {$count} tài khoản người dùng thành công!";
+                if ($failed > 0) {
+                    $msg .= " ({$failed} tài khoản không thể xóa do có dữ liệu liên quan)";
+                }
+                return redirect()->back()->with('success', $msg);
+            }
+
+            return redirect()->back()->with('error', 'Không thể xóa các tài khoản đã chọn do có dữ liệu liên quan.');
         }
 
         return redirect()->back()->with('error', 'Thao tác không hợp lệ.');

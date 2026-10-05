@@ -110,74 +110,9 @@
                                         </button>
 
                                         <!-- Nút Xóa -->
-                                        <form action="{{ route('admin.coupons.destroy', $cp->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Bạn có chắc chắn muốn xóa mã giảm giá này?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1">
-                                                <i class="fa-solid fa-trash me-1"></i> Xóa
-                                            </button>
-                                        </form>
-
-                                        <!-- MODAL EDIT COUPON #{{ $cp->id }} -->
-                                        <div class="modal fade text-start" id="editCouponModal{{ $cp->id }}" tabindex="-1" aria-labelledby="editCouponModalLabel{{ $cp->id }}" aria-hidden="true">
-                                            <div class="modal-dialog modal-dialog-centered">
-                                                <div class="modal-content rounded-4 border-0 shadow-lg">
-                                                    <div class="modal-header bg-dark text-white border-0 py-3">
-                                                        <h6 class="modal-title fw-bold" id="editCouponModalLabel{{ $cp->id }}">
-                                                            <i class="fa-solid fa-pen-to-square text-warning me-2"></i>Chỉnh Sửa Mã Giảm Giá: {{ $cp->code }}
-                                                        </h6>
-                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                    </div>
-                                                    <form action="{{ route('admin.coupons.update', $cp->id) }}" method="POST">
-                                                        @csrf
-                                                        @method('PUT')
-                                                        <div class="modal-body p-4">
-                                                            <div class="mb-3">
-                                                                <label class="form-label small fw-bold text-dark">Mã Coupon (Ví dụ: MAYCHIEU10):</label>
-                                                                <input type="text" name="code" class="form-control form-control-sm text-uppercase fw-bold" value="{{ old('code', $cp->code) }}" required>
-                                                            </div>
-
-                                                            <div class="mb-3">
-                                                                <label class="form-label small fw-bold text-dark">Loại giảm giá:</label>
-                                                                <select name="type" class="form-select form-select-sm">
-                                                                    <option value="fixed" {{ old('type', $cp->type) === 'fixed' ? 'selected' : '' }}>Giảm theo số tiền cố định (VND)</option>
-                                                                    <option value="percent" {{ old('type', $cp->type) === 'percent' ? 'selected' : '' }}>Giảm theo phần trăm (%)</option>
-                                                                </select>
-                                                            </div>
-
-                                                            <div class="mb-3">
-                                                                <label class="form-label small fw-bold text-dark">Giá trị giảm:</label>
-                                                                <input type="number" name="value" class="form-control form-control-sm" value="{{ old('value', $cp->value) }}" required>
-                                                            </div>
-
-                                                            <div class="mb-3">
-                                                                <label class="form-label small fw-bold text-dark">Giá trị đơn hàng tối thiểu (VND):</label>
-                                                                <input type="number" name="min_order_amount" class="form-control form-control-sm" value="{{ old('min_order_amount', $cp->min_order_amount) }}">
-                                                            </div>
-
-                                                            <div class="mb-3">
-                                                                <label class="form-label small fw-bold text-dark">Hạn sử dụng:</label>
-                                                                <input type="date" name="expires_at" class="form-control form-control-sm" value="{{ old('expires_at', $cp->expires_at ? $cp->expires_at->format('Y-m-d') : '') }}">
-                                                            </div>
-
-                                                            <div class="mb-3">
-                                                                <label class="form-label small fw-bold text-dark">Trạng thái mã:</label>
-                                                                <select name="is_active" class="form-select form-select-sm">
-                                                                    <option value="1" {{ old('is_active', $cp->is_active) ? 'selected' : '' }}>Đang hoạt động</option>
-                                                                    <option value="0" {{ !old('is_active', $cp->is_active) ? 'selected' : '' }}>Tắt (Khóa)</option>
-                                                                </select>
-                                                            </div>
-                                                        </div>
-                                                        <div class="modal-footer bg-light border-0 py-2">
-                                                            <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Hủy bỏ</button>
-                                                            <button type="submit" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">
-                                                                <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Cập Nhật
-                                                            </button>
-                                                        </div>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 py-1" onclick="deleteSingleCoupon('{{ route('admin.coupons.destroy', $cp->id) }}', '{{ addslashes($cp->code) }}')">
+                                            <i class="fa-solid fa-trash me-1"></i> Xóa
+                                        </button>
                                     </td>
                                 </tr>
                             @empty
@@ -188,10 +123,87 @@
                 </div>
             </div>
         </form>
+
+        <!-- MODAL EDIT COUPONS (Nằm ngoài bulk form) -->
+        @foreach($coupons as $cp)
+            <div class="modal fade text-start" id="editCouponModal{{ $cp->id }}" tabindex="-1" aria-labelledby="editCouponModalLabel{{ $cp->id }}" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content rounded-4 border-0 shadow-lg">
+                        <div class="modal-header bg-dark text-white border-0 py-3">
+                            <h6 class="modal-title fw-bold" id="editCouponModalLabel{{ $cp->id }}">
+                                <i class="fa-solid fa-pen-to-square text-warning me-2"></i>Chỉnh Sửa Mã Giảm Giá: {{ $cp->code }}
+                            </h6>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{ route('admin.coupons.update', $cp->id) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <div class="modal-body p-4">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-dark">Mã Coupon (Ví dụ: MAYCHIEU10):</label>
+                                    <input type="text" name="code" class="form-control form-control-sm text-uppercase fw-bold" value="{{ old('code', $cp->code) }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-dark">Loại giảm giá:</label>
+                                    <select name="type" class="form-select form-select-sm">
+                                        <option value="fixed" {{ old('type', $cp->type) === 'fixed' ? 'selected' : '' }}>Giảm theo số tiền cố định (VND)</option>
+                                        <option value="percent" {{ old('type', $cp->type) === 'percent' ? 'selected' : '' }}>Giảm theo phần trăm (%)</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-dark">Giá trị giảm:</label>
+                                    <input type="number" name="value" class="form-control form-control-sm" value="{{ old('value', $cp->value) }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-dark">Giá trị đơn hàng tối thiểu (VND):</label>
+                                    <input type="number" name="min_order_amount" class="form-control form-control-sm" value="{{ old('min_order_amount', $cp->min_order_amount) }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-dark">Hạn sử dụng:</label>
+                                    <input type="date" name="expires_at" class="form-control form-control-sm" value="{{ old('expires_at', $cp->expires_at ? $cp->expires_at->format('Y-m-d') : '') }}">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label small fw-bold text-dark">Trạng thái mã:</label>
+                                    <select name="is_active" class="form-select form-select-sm">
+                                        <option value="1" {{ old('is_active', $cp->is_active) ? 'selected' : '' }}>Đang hoạt động</option>
+                                        <option value="0" {{ !old('is_active', $cp->is_active) ? 'selected' : '' }}>Tắt (Khóa)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light border-0 py-2">
+                                <button type="button" class="btn btn-secondary btn-sm rounded-pill px-3" data-bs-dismiss="modal">Hủy bỏ</button>
+                                <button type="submit" class="btn btn-warning btn-sm rounded-pill px-3 fw-bold">
+                                    <i class="fa-solid fa-floppy-disk me-1"></i> Lưu Cập Nhật
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @endforeach
     </div>
 </div>
 
+<!-- Form xóa đơn lẻ coupon -->
+<form id="singleDeleteCouponForm" action="" method="POST" style="display: none;">
+    @csrf
+    @method('DELETE')
+</form>
+
 <script>
+function deleteSingleCoupon(url, couponCode) {
+    if (confirm(`Bạn có chắc chắn muốn XÓA mã giảm giá "${couponCode}" không?`)) {
+        const form = document.getElementById('singleDeleteCouponForm');
+        form.action = url;
+        form.submit();
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const selectAll = document.getElementById('selectAll');
     const itemCheckboxes = document.querySelectorAll('.item-checkbox');
