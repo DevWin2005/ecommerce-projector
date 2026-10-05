@@ -28,6 +28,10 @@ use App\Http\Controllers\User\ReviewController;
 use App\Http\Controllers\User\GHNController;
 use App\Http\Controllers\User\MomoController;
 
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
+
 /*
 |--------------------------------------------------------------------------
 | TRANG LANDING WELCOME & TRANG CHỦ BÁN HÀNG
@@ -197,4 +201,48 @@ Route::prefix('locations')->name('locations.')->group(function () {
     Route::get('/districts/{provinceId}', [GHNController::class, 'getDistricts'])->name('districts');
     Route::get('/wards/{districtId}', [GHNController::class, 'getWards'])->name('wards');
     Route::post('/calculate-fee', [GHNController::class, 'getShippingFee'])->name('fee');
+});
+
+
+Route::get('/kiem-tra-mail', function () {
+    // 1. Ép xóa sạch config cache hiện tại
+    Artisan::call('config:clear');
+
+    // 2. Lấy thông tin cấu hình thực tế mà PHP đang nhận diện
+    $debugInfo = [
+        'default_mailer'   => config('mail.default'),
+        'smtp_host'        => config('mail.mailers.smtp.host'),
+        'smtp_port'        => config('mail.mailers.smtp.port'),
+        'smtp_username'    => config('mail.mailers.smtp.username'),
+        'from_address'     => config('mail.from.address'),
+        'queue_connection' => config('queue.default'),
+    ];
+
+    // 3. Kiểm tra xem có email nào đang bị kẹt trong bảng jobs không
+    try {
+        $debugInfo['pending_jobs_count'] = DB::table('jobs')->count();
+    } catch (\Throwable $e) {
+        $debugInfo['pending_jobs_count'] = 'Bảng jobs không tồn tại hoặc lỗi: ' . $e->getMessage();
+    }
+
+    // 4. Thử bắn 1 email trực tiếp qua SMTP của Brevo
+    try {
+        Mail::raw('Xin chao! Day la thu kiem tra ket noi truc tiep tu Render toi Brevo.', function ($message) {
+            $message->to('ducthang071005@gmail.com')
+                    ->subject('Kiem tra ket noi Brevo thanh cong');
+        });
+
+        return response()->json([
+            'ket_qua' => 'THANH_CONG',
+            'thong_bao' => 'Brevo da nhan lenh gui thanh cong! Hay kiem tra hom thu.',
+            'cau_hinh_hien_tai' => $debugInfo
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'ket_qua' => 'THAT_BAI',
+            'loi_chi_tiet' => $e->getMessage(),
+            'loai_ngoai_le' => get_class($e),
+            'cau_hinh_hien_tai' => $debugInfo
+        ], 500);
+    }
 });
